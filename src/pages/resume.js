@@ -41,31 +41,36 @@ export default function Resume() {
               </div>
               <div className={styles.exp_right}>
                 <p>{companyInfo.description}</p>
-                {companyInfo.projects.map(item => (
-                  <div className={styles.project}>
-                    <h4>{item.name}</h4>
-                    <span>{item.period}</span>
-                    <h5>Description</h5>
-                    <p>{parseHighlight(item.description)}</p>
-                    <h5>What did I do</h5>
-                    <ul>
-                      {item.whatDidIDo.map(desc => (
-                        <li>{parseHighlight(desc)}</li>
-                      ))}
-                    </ul>
-                    <h5>Result</h5>
-                    <ul>
-                      {item.result.map(res => (
-                        <li>{parseHighlight(res)}</li>
-                      ))}
-                    </ul>
-                    <div className={styles.tags}>
-                      {item.tags.map(tag => (
-                        <span className={styles.tag}>{tag}</span>
-                      ))}
+                {companyInfo.projects &&
+                  companyInfo.projects.map(item => (
+                    <div className={styles.project}>
+                      <h4>{item.name}</h4>
+                      <span>{item.period}</span>
+                      <h5>Description</h5>
+                      <p>{parseHighlight(item.description)}</p>
+                      <h5>What did I do</h5>
+                      <ul>
+                        {item.whatDidIDo.map(desc => (
+                          <li>{parseHighlight(desc)}</li>
+                        ))}
+                      </ul>
+                      {item.result && (
+                        <>
+                          <h5>Result</h5>
+                          <ul>
+                            {item.result.map(res => (
+                              <li>{parseHighlight(res)}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      <div className={styles.tags}>
+                        {item.tags.map(tag => (
+                          <span className={styles.tag}>{tag}</span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           ))}
@@ -109,12 +114,15 @@ export default function Resume() {
   )
 }
 
-function parseHighlight(text) {
+export function parseHighlight(text) {
   if (!text) return null
 
-  const parts = text.split(/(\[\[.*?\]\])/g)
+  const parts = text.split(/(\[\[.*?\]\]|\{\{.*?\}\})/g)
 
   return parts.map((part, index) => {
+    if (!part) return null
+
+    // [[highlight]]
     if (part.startsWith("[[") && part.endsWith("]]")) {
       const content = part.slice(2, -2)
       return (
@@ -123,18 +131,30 @@ function parseHighlight(text) {
         </span>
       )
     }
-    return part ? <React.Fragment key={index}>{part}</React.Fragment> : null
+
+    // {{링크}}
+    if (part.startsWith("{{") && part.endsWith("}}")) {
+      const href = part.slice(2, -2).trim()
+      return (
+        <a key={index} href={href} target="_blank" rel="noopener noreferrer">
+          {href}
+        </a>
+      )
+    }
+
+    // 일반 문자열
+    return <React.Fragment key={index}>{part}</React.Fragment>
   })
 }
 
-const constants = {
+export const constants = {
   workExperience: [
     {
       company: "카카오",
-      position: "다음채널개발 FE Developer",
+      position: "다음채널개발 / FE Developer",
       period: "2024.03 -",
       description:
-        "[[다음채널개발 부서에서 뉴스뷰, 콘텐츠뷰, 포스트뷰, 라이브뷰 등 파트너 채널들의 콘텐츠를 제공하는 서비스 페이지의 프론트엔드 개발 업무]]를 담당하였습니다.",
+        "다음채널개발 부서에서 뉴스뷰, 콘텐츠뷰, 포스트뷰, 라이브뷰 등 파트너 채널들의 콘텐츠를 제공하는 서비스 페이지의 프론트엔드 개발 업무를 담당하였습니다.",
       projects: [
         {
           name: "채널라이브 - 라이브뷰 서비스 개발",
@@ -144,10 +164,12 @@ const constants = {
           whatDidIDo: [
             "언론사 채널의 실시간 스트리밍 '라이브 뷰' 프론트엔드를 개발했습니다.",
             "브라우저 메모리 최적화를 위해 채팅 메시지 개수를 250개로 제한하고, MutationObserver API와 DOM Range API를 활용해 성능을 개선했습니다.",
+            "서버 부하 감소를 위해 부모 페이지에서 polling 방식으로 API를 호출하고, 변경점이 있을 때만 iframe에 postMessage로 전달하는 방식을 구현했습니다.",
+            "PC, 모바일 웹앱(iOS, Android), 다음앱에서 [[브라우저 호환성을 안정적으로 제공]]하기 위한 테스트와 트러블 슈팅을 진행했습니다.",
           ],
           result: [
             "서비스 오픈 후 12일간 총 6천만 이상의 재생수와 550만 명의 재생자수를 기록하며 성공적으로 프로젝트를 완료했습니다.",
-            "서비스 URL: https://live.v.daum.net/news/zKltxoJsRT",
+            "서비스 URL: {{https://live.v.daum.net/news/zKltxoJsRT}}",
           ],
           tags: ["React", "TypeScript", "Next.js", "pnpm"],
         },
@@ -178,15 +200,36 @@ const constants = {
           ],
           result: [
             "라이트하우스(Lighthouse) 수치 개선을 이룰 수 있었습니다. ([[성능: 68점 → 81점, 접근성: 68점 → 90점, SEO: 74점 → 91점]])",
-            "서비스 URL: https://v.daum.net/v/46kFjx0C4x",
+            "서비스 URL: {{https://v.daum.net/v/46kFjx0C4x}}",
           ],
           tags: ["React", "TypeScript"],
         },
       ],
     },
     {
+      company: "카카오",
+      position: "다음채널개발파트 / 인턴",
+      period: "2024.01 - 2024.02",
+      description:
+        "2024 카카오 채용 연계형 겨울 인턴십 과정에 참여하여 다음채널 기자별 페이지 프로젝트를 진행하였습니다.",
+      projects: [
+        {
+          name: "(과제) 기자 페이지 프로젝트",
+          period: "2024.01 - 2024.02",
+          description:
+            "2024 카카오 인턴십 기간 동안 진행했던 과제로, 주어진 요구사항과 API를 활용하여 기자별 페이지 개발을 진행하였습니다. 사내 인프라와 조직에서 사용하는 FE 기술을 활용하여 로그인, 기자 프로필, 기사 리스트, 통계, 방명록 등의 기능을 구현하였습니다.",
+          whatDidIDo: [
+            "콘텐츠 목록을 무한 스크롤로 구현하면서 대용량 리스트 처리에 대응하기 위해 [[react-window를 이용한 가상화 기법]]을 통해 개선하였습니다.",
+            "좋아요 및 수정 기능에 대해서는 [[Optimistic UI]]를 사용하여 사용자에게 빠른 인터렉션을 보여주는 것을 목표로 하였습니다.",
+            " SWR을 서버 데이터 fetching 및 caching 용도로 선택하면서 추가적인 개선이 필요한 부분에 대해 SWR middleware를 이용해 기존 훅을 커스텀하여 [[서버, 클라이언트 컴포넌트 간 중복된 API 요청이 이루어지지 않도록 개선]]하였습니다.",
+          ],
+          tags: ["Next.js", "TypeScript", "SWR", "Docker", "k8s"],
+        },
+      ],
+    },
+    {
       company: "비바리퍼블리카",
-      position: "PC Design Platform Team - UX Engineer Assistant",
+      position: "PC Design Platform Team / UX Engineer Assistant",
       period: "2023.01 - 2023.03",
       description:
         "토스 PC 제품에 들어가는 Toss Design System(TDS) 구현 및 유지보수 업무를 진행했습니다.",
